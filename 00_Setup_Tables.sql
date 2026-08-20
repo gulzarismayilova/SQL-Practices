@@ -1,4 +1,3 @@
-SQL
 -- 1. Musteriler Cedveli
 CREATE TABLE musteriler (
     musteri_id NUMBER PRIMARY KEY,
