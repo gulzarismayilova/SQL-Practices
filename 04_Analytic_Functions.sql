@@ -21,49 +21,50 @@ WHERE balans_dense_rank <= 2;
 
 ---------------------------------------------------------------
 -- 2. LAG & LEAD
--- Goal: Compare customer transaction balance with previous and 
---       next transactions, calculating balance differences.
+-- Goal: Compare transactions with previous and next records
+--       by date for each account.
 ---------------------------------------------------------------
 SELECT 
-    musteri_id, 
     hesab_id, 
-    balans, 
-    yenilenme_tarixi,
-    -- Previous balance
-    LAG(balans) OVER (
-        PARTITION BY musteri_id 
-        ORDER BY yenilenme_tarixi ASC
-    ) AS evvelki_balans,
-    -- Next balance
-    LEAD(balans) OVER (
-        PARTITION BY musteri_id 
-        ORDER BY yenilenme_tarixi ASC
-    ) AS sonraki_balans,
-    -- Balance change from previous transaction
-    balans - LAG(balans) OVER (
-        PARTITION BY musteri_id 
-        ORDER BY yenilenme_tarixi ASC
-    ) AS balans_ferqi
-FROM hesablar;
+    emeliyyat_id, 
+    mebleg, 
+    emeliyyat_tarixi,
+    -- Previous transaction amount
+    LAG(mebleg) OVER (
+        PARTITION BY hesab_id 
+        ORDER BY emeliyyat_tarixi ASC
+    ) AS evvelki_mebleg,
+    -- Next transaction amount
+    LEAD(mebleg) OVER (
+        PARTITION BY hesab_id 
+        ORDER BY emeliyyat_tarixi ASC
+    ) AS sonraki_mebleg,
+    -- Transaction amount difference
+    mebleg - LAG(mebleg) OVER (
+        PARTITION BY hesab_id 
+        ORDER BY emeliyyat_tarixi ASC
+    ) AS mebleg_ferqi
+FROM emeliyyatlar;
 
 ---------------------------------------------------------------
 -- 3. FIRST_VALUE & LAST_VALUE
--- Goal: Retrieve the customer's initial payment and most recent payment.
+-- Goal: Retrieve the initial and most recent transaction amount 
+--       for each account.
 ---------------------------------------------------------------
 SELECT 
-    musteri_id, 
-    odenis_id, 
+    hesab_id, 
+    emeliyyat_id, 
     mebleg, 
-    odenis_tarixi,
-    -- First payment amount
+    emeliyyat_tarixi,
+    -- First transaction amount
     FIRST_VALUE(mebleg) OVER (
-        PARTITION BY musteri_id 
-        ORDER BY odenis_tarixi ASC
-    ) AS ilk_odenis_meblegi,
-    -- Most recent payment amount
+        PARTITION BY hesab_id 
+        ORDER BY emeliyyat_tarixi ASC
+    ) AS ilk_emeliyyat_meblegi,
+    -- Most recent transaction amount
     LAST_VALUE(mebleg) OVER (
-        PARTITION BY musteri_id 
-        ORDER BY odenis_tarixi ASC 
+        PARTITION BY hesab_id 
+        ORDER BY emeliyyat_tarixi ASC 
         ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-    ) AS son_odenis_meblegi
-FROM odenisler;
+    ) AS son_emeliyyat_meblegi
+FROM emeliyyatlar;
